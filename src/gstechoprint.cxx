@@ -55,6 +55,7 @@ PROP_SECONDS,
 };
 
 #define ECHOPRINT_CAPS "audio/x-raw-float, channels=(int)1, rate=(int)11025, width=(int)32 , endianness=1234"
+#define EP_RATE (11025)
 
 /* the capabilities of the inputs and outputs.
  *
@@ -241,7 +242,7 @@ Codegen *cg;
 const float *rawdata;
 std::string ecode;
 Gstechoprint *filter=GST_ECHOPRINT(base);
-guint size;
+guint size, samp;
 
 if (filter->done)
 	return GST_FLOW_OK;
@@ -250,12 +251,18 @@ gst_buffer_ref(outbuf);
 filter->buffer=gst_buffer_join(filter->buffer, outbuf);
 size=GST_BUFFER_SIZE(filter->buffer);
 
-if ((size/sizeof(float))/11025 < filter->seconds)
+if ((size/sizeof(float))/EP_RATE < filter->seconds)
 	return GST_FLOW_OK;
 
 rawdata=(const float *)GST_BUFFER_DATA(filter->buffer);
 
-cg=new Codegen(rawdata, size / sizeof(float), 0);
+#if 1
+samp=filter->seconds*EP_RATE;
+#else
+samp=size / sizeof(float);
+#endif
+
+cg=new Codegen(rawdata, samp, 0);
 ecode=cg->getCodeString();
 
 filter->code=ecode.c_str();
