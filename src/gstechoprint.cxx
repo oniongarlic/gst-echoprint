@@ -246,6 +246,7 @@ guint size;
 if (filter->done)
 	return GST_FLOW_OK;
 
+gst_buffer_ref(outbuf);
 filter->buffer=gst_buffer_join(filter->buffer, outbuf);
 size=GST_BUFFER_SIZE(filter->buffer);
 
