@@ -1,0 +1,9 @@
+WHAT IT IS
+----------
+
+Element for generating echoprint codes using the echoprint-codegen library.
+
+HOW TO USE IT
+-------------
+
+See the test script gst-echorpint-test.sh for some example pipeline.
