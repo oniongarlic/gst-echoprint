@@ -27,6 +27,7 @@ AM_CONFIG_HEADER(config.h)
 
 dnl check for tools
 AC_PROG_CC
+AC_PROG_CXX
 AC_PROG_LIBTOOL
 
 dnl decide on error flags
@@ -121,14 +122,12 @@ dnl make _CFLAGS and _LIBS available
 AC_LANG_PUSH([C++])
 AC_CHECK_HEADERS([Codegen.h])
 
-SAVED_LDFLAGS=$LDFLAGS
 LDFLAGS="$LDFLAGS -lcodegen"
 AC_LINK_IFELSE(
   [AC_LANG_PROGRAM([#include <Codegen.h>],
-    [Codegen::getVersion dummy])],
+    [Codegen::getVersion()])],
   [TEST_LIBS="$TEST_LIBS -lcodegen"] [HAVE_ECHOPRINT=1],
   [AC_MSG_WARN([libcodegen is not installed.])])
-LDFLAGS=$SAVED_LDFLAGS
 
 AC_LANG_POP
 
