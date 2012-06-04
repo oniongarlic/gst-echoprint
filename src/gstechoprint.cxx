@@ -141,8 +141,6 @@ return TRUE;
 static void
 gst_echoprint_init(Gstechoprint *filter, GstechoprintClass * klass)
 {
-g_debug("init");
-
 filter->silent=FALSE;
 filter->seconds=30;
 filter->done=FALSE;
@@ -159,8 +157,6 @@ gst_echoprint_start(GstBaseTransform *base)
 {
 Gstechoprint *filter=GST_ECHOPRINT(base);
 
-g_debug("start");
-
 filter->silent=FALSE;
 filter->done=FALSE;
 filter->buffer=gst_buffer_new();
@@ -172,8 +168,6 @@ static gboolean
 gst_echoprint_stop(GstBaseTransform *base)
 {
 Gstechoprint *filter=GST_ECHOPRINT(base);
-
-g_debug("stop");
 
 filter->silent=FALSE;
 filter->done=FALSE;
