@@ -1,4 +1,4 @@
-/* 
+/*
  * GStreamer
  * Copyright (C) 2006 Stefan Kost <ensonic@users.sf.net>
  * Copyright (C) 2009-2010 Kaj-Michael Lang <milang@tal.org>
@@ -18,7 +18,7 @@
  * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
  * Boston, MA 02111-1307, USA.
  */
- 
+
 #ifndef __GST_ECHOPRINT_H__
 #define __GST_ECHOPRINT_H__
 
@@ -46,9 +46,10 @@ struct _Gstechoprint {
 	GstAudioFilter element;
 
 	/* Private */
-	gboolean silent;
+	gboolean interval;
 	gboolean done;
 	guint seconds;
+	guint nextint;
 	GstBuffer *buffer;
 	const gchar *code;
 };

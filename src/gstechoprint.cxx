@@ -50,7 +50,7 @@ LAST_SIGNAL
 enum
 {
 PROP_0,
-PROP_SILENT,
+PROP_INTERVAL,
 PROP_SECONDS,
 };
 
@@ -119,8 +119,8 @@ gobject_class=(GObjectClass *) klass;
 gobject_class->set_property=gst_echoprint_set_property;
 gobject_class->get_property=gst_echoprint_get_property;
 
-g_object_class_install_property (gobject_class, PROP_SILENT, g_param_spec_boolean ("silent", "Silent", "Turn of bus messages", FALSE, (GParamFlags)G_PARAM_READWRITE));
-g_object_class_install_property (gobject_class, PROP_SECONDS, g_param_spec_int ("seconds", "Seconds", "Seconds of audio to buffer", 20, 40, 30, (GParamFlags)G_PARAM_READWRITE));
+g_object_class_install_property (gobject_class, PROP_INTERVAL, g_param_spec_boolean ("interval", "Interval", "Post code every 10 second intervals up to Seconds", FALSE, (GParamFlags)G_PARAM_READWRITE));
+g_object_class_install_property (gobject_class, PROP_SECONDS, g_param_spec_int ("seconds", "Seconds", "Max seconds of audio to use for code generation", 10, 120, 30, (GParamFlags)G_PARAM_READWRITE));
 
 GST_BASE_TRANSFORM_CLASS (klass)->set_caps=GST_DEBUG_FUNCPTR (gst_echoprint_set_caps);
 GST_BASE_TRANSFORM_CLASS (klass)->transform_ip=GST_DEBUG_FUNCPTR (gst_echoprint_transform_ip);
@@ -141,7 +141,8 @@ return TRUE;
 static void
 gst_echoprint_init(Gstechoprint *filter, GstechoprintClass * klass)
 {
-filter->silent=FALSE;
+filter->interval=FALSE;
+filter->nextint=10;
 filter->seconds=30;
 filter->done=FALSE;
 }
@@ -157,7 +158,7 @@ gst_echoprint_start(GstBaseTransform *base)
 {
 Gstechoprint *filter=GST_ECHOPRINT(base);
 
-filter->silent=FALSE;
+filter->nextint=10;
 filter->done=FALSE;
 filter->buffer=gst_buffer_new();
 
@@ -169,7 +170,6 @@ gst_echoprint_stop(GstBaseTransform *base)
 {
 Gstechoprint *filter=GST_ECHOPRINT(base);
 
-filter->silent=FALSE;
 filter->done=FALSE;
 if (filter->buffer)
 	gst_buffer_unref(filter->buffer);
@@ -183,9 +183,9 @@ gst_echoprint_set_property(GObject * object, guint prop_id, const GValue * value
 Gstechoprint *filter=GST_ECHOPRINT(object);
 
 switch (prop_id) {
-	case PROP_SILENT:
+	case PROP_INTERVAL:
 		GST_OBJECT_LOCK(object);
-		filter->silent=g_value_get_boolean (value);
+		filter->interval=g_value_get_boolean (value);
 		GST_OBJECT_UNLOCK(object);
 	break;
 	case PROP_SECONDS:
@@ -205,9 +205,9 @@ gst_echoprint_get_property(GObject * object, guint prop_id, GValue * value, GPar
 Gstechoprint *filter=GST_ECHOPRINT(object);
 
 switch (prop_id) {
-	case PROP_SILENT:
+	case PROP_INTERVAL:
 		GST_OBJECT_LOCK(object);
-		g_value_set_boolean (value, filter->silent);
+		g_value_set_boolean (value, filter->interval);
 		GST_OBJECT_UNLOCK(object);
 	break;
 	case PROP_SECONDS:
@@ -227,8 +227,6 @@ gst_echoprint_message_new(Gstechoprint *filter)
 return gst_message_new_element(GST_OBJECT(filter), gst_structure_new ("echoprint", "code", G_TYPE_STRING, filter->code, NULL));
 }
 
-/* GstBaseTransform vmethod implementations */
-
 static GstFlowReturn
 gst_echoprint_transform_ip(GstBaseTransform *base, GstBuffer *outbuf)
 {
@@ -236,37 +234,39 @@ Codegen *cg;
 const float *rawdata;
 std::string ecode;
 Gstechoprint *filter=GST_ECHOPRINT(base);
-guint size, samp;
+guint size, samp, use_seconds;
 
+/* If we are done, skip all work */
 if (filter->done)
 	return GST_FLOW_OK;
 
+/* Collect buffers for codegeneration, until we have enough to work on */
 gst_buffer_ref(outbuf);
 filter->buffer=gst_buffer_join(filter->buffer, outbuf);
 size=GST_BUFFER_SIZE(filter->buffer);
 
-if ((size/sizeof(float))/EP_RATE < filter->seconds)
+use_seconds=filter->interval ? filter->nextint : filter->seconds;
+
+if ((size/sizeof(float))/EP_RATE < use_seconds)
 	return GST_FLOW_OK;
 
 rawdata=(const float *)GST_BUFFER_DATA(filter->buffer);
 
-#if 1
-samp=filter->seconds*EP_RATE;
-#else
-samp=size / sizeof(float);
-#endif
+samp=use_seconds*EP_RATE;
 
 cg=new Codegen(rawdata, samp, 0);
 ecode=cg->getCodeString();
-
 filter->code=ecode.c_str();
-
 gst_element_post_message(GST_ELEMENT (filter), gst_echoprint_message_new(filter));
 
-filter->done=TRUE;
+if (filter->interval)
+	filter->nextint+=10;
 
-gst_buffer_unref(filter->buffer);
-filter->buffer=NULL;
+if (filter->interval==FALSE || (filter->interval==TRUE && filter->nextint>filter->seconds)) {
+	filter->done=TRUE;
+	gst_buffer_unref(filter->buffer);
+	filter->buffer=NULL;
+}
 
 return GST_FLOW_OK;
 }
@@ -288,7 +288,7 @@ GST_PLUGIN_DEFINE (
 	GST_VERSION_MAJOR,
 	GST_VERSION_MINOR,
 	"echoprint",
-	"Data Matrix barcodes decoder element",
+	"Echoprint codegen element",
 	echoprint_init,
 	VERSION,
 	"LGPL",
