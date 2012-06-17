@@ -34,7 +34,7 @@
 #include <gst/base/gstbasetransform.h>
 #include <gst/audio/audio.h>
 
-#include <Codegen.h>
+#include <echoprint/Codegen.h>
 
 #include "gstechoprint.h"
 

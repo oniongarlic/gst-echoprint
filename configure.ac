@@ -120,7 +120,7 @@ dnl make _CFLAGS and _LIBS available
 # PKG_CHECK_MODULES(ECHOPRINT, libdmtx)
 
 AC_LANG_PUSH([C++])
-AC_CHECK_HEADERS([Codegen.h])
+AC_CHECK_HEADERS([echoprint/Codegen.h])
 
 LDFLAGS="$LDFLAGS -lcodegen"
 AC_LINK_IFELSE(
