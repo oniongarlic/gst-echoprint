@@ -41,6 +41,21 @@
 GST_DEBUG_CATEGORY_STATIC (gst_echoprint_debug);
 #define GST_CAT_DEFAULT gst_echoprint_debug
 
+/***
+ * For old gstreamer in Diablo 
+ */
+#ifndef GST_MESSAGE_SRC_NAME
+#define GST_MESSAGE_SRC_NAME(message)   (GST_MESSAGE_SRC(message) ? \
+     GST_OBJECT_NAME (GST_MESSAGE_SRC(message)) : "(NULL)")
+#endif
+#ifndef GST_CHECK_VERSION
+#define	GST_CHECK_VERSION(major,minor,micro)	\
+    (GST_VERSION_MAJOR > (major) || \
+    (GST_VERSION_MAJOR == (major) && GST_VERSION_MINOR > (minor)) || \
+    (GST_VERSION_MAJOR == (major) && GST_VERSION_MINOR == (minor) && \
+     GST_VERSION_MICRO >= (micro)))
+#endif
+
 /* Filter signals and args */
 enum
 {
@@ -99,11 +114,22 @@ gst_echoprint_base_init(gpointer klass)
 {
 GstElementClass *element_class=GST_ELEMENT_CLASS (klass);
 
+#if GST_CHECK_VERSION(0,10,14)
 gst_element_class_set_details_simple (element_class,
 	"echoprint",
-	"Echoprint/Filter",
+	"Filter/Echoprint",
 	"Echoprint codegenerator using libcodegen",
-	" <milang@tal.org>");
+	"Kaj-Michael Lang <milang@tal.org>");
+#else
+GstElementDetails details;
+
+details.longname = "echoprint";
+details.klass = "Filter/Echoprint";
+details.description = "Echoprint codegenerator using libcodegen";
+details.author = "Kaj-Michael Lang <milang@tal.org>";
+
+gst_element_class_set_details(element_class, &details);
+#endif
 
 gst_element_class_add_pad_template (element_class, gst_static_pad_template_get (&src_template));
 gst_element_class_add_pad_template (element_class, gst_static_pad_template_get (&sink_template));
