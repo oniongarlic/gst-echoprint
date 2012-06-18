@@ -124,7 +124,7 @@ AC_CHECK_HEADERS([echoprint/Codegen.h])
 
 LDFLAGS="$LDFLAGS -lcodegen"
 AC_LINK_IFELSE(
-  [AC_LANG_PROGRAM([#include <Codegen.h>],
+  [AC_LANG_PROGRAM([#include <echoprint/Codegen.h>],
     [Codegen::getVersion()])],
   [TEST_LIBS="$TEST_LIBS -lcodegen"] [HAVE_ECHOPRINT=1],
   [AC_MSG_WARN([libcodegen is not installed.])])
