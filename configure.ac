@@ -1,9 +1,9 @@
 AC_INIT()
 
 dnl versions of gstreamer and plugins-base
-GST_MAJORMINOR=0.10
-GST_REQUIRED=0.10.0
-GSTPB_REQUIRED=0.10.0
+GST_MAJORMINOR=1.0
+GST_REQUIRED=1.0.0
+GSTPB_REQUIRED=1.0.0
 
 dnl fill in your package name and version here
 dnl the fourth (nano) number should be 0 for a release, 1 for CVS,
@@ -11,7 +11,7 @@ dnl and 2... for a prerelease
 
 dnl when going to/from release please set the nano correctly !
 dnl releases only do Wall, cvs and prerelease does Werror too
-AS_VERSION(gst-echoprint, GST_PLUGIN_VERSION, 0, 10, 0, 2, GST_PLUGIN_CVS="no", GST_PLUGIN_CVS="yes")
+AS_VERSION(gst-echoprint, GST_PLUGIN_VERSION, 1, 0, 0, 0, GST_PLUGIN_CVS="no", GST_PLUGIN_CVS="yes")
 
 dnl AM_MAINTAINER_MODE provides the option to enable maintainer mode
 AM_MAINTAINER_MODE

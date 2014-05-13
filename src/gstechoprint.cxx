@@ -94,10 +94,11 @@ GST_STATIC_PAD_TEMPLATE (
 /* debug category for fltering log messages
  *
  */
-#define DEBUG_INIT(bla) \
-	GST_DEBUG_CATEGORY_INIT (gst_echoprint_debug, "echoprint", 0, "echoprint");
+#define gst_valve_parent_class parent_class
 
-GST_BOILERPLATE_FULL (Gstechoprint, gst_echoprint, GstBaseTransform, GST_TYPE_BASE_TRANSFORM, DEBUG_INIT);
+#define DEBUG_INIT GST_DEBUG_CATEGORY_INIT (gst_echoprint_debug, "echoprint", 0, "echoprint");
+
+G_DEFINE_TYPE_WITH_CODE (Gstechoprint, gst_echoprint, GST_TYPE_BASE_TRANSFORM, DEBUG_INIT);
 
 static void gst_echoprint_set_property (GObject * object, guint prop_id, const GValue * value, GParamSpec * pspec);
 static void gst_echoprint_get_property (GObject * object, guint prop_id, GValue * value, GParamSpec * pspec);
@@ -110,26 +111,14 @@ static gboolean gst_echoprint_src_event (GstBaseTransform *trans, GstEvent *even
 /* GObject vmethod implementations */
 
 static void
-gst_echoprint_base_init(gpointer klass)
+gst_echoprint_init(GstechoprintClass *klass)
 {
 GstElementClass *element_class=GST_ELEMENT_CLASS (klass);
-
-#if GST_CHECK_VERSION(0,10,14)
-gst_element_class_set_details_simple (element_class,
+gst_element_class_set_static_metadata (element_class,
 	"echoprint",
 	"Filter/Echoprint",
 	"Echoprint codegenerator using libcodegen",
 	"Kaj-Michael Lang <milang@tal.org>");
-#else
-GstElementDetails details;
-
-details.longname = "echoprint";
-details.klass = "Filter/Echoprint";
-details.description = "Echoprint codegenerator using libcodegen";
-details.author = "Kaj-Michael Lang <milang@tal.org>";
-
-gst_element_class_set_details(element_class, &details);
-#endif
 
 gst_element_class_add_pad_template (element_class, gst_static_pad_template_get (&src_template));
 gst_element_class_add_pad_template (element_class, gst_static_pad_template_get (&sink_template));
@@ -261,6 +250,7 @@ const float *rawdata;
 std::string ecode;
 Gstechoprint *filter=GST_ECHOPRINT(base);
 guint size, samp, use_seconds;
+GstMapInfo info;
 
 /* If we are done, skip all work */
 if (filter->done)
@@ -268,15 +258,16 @@ if (filter->done)
 
 /* Collect buffers for codegeneration, until we have enough to work on */
 gst_buffer_ref(outbuf);
-filter->buffer=gst_buffer_join(filter->buffer, outbuf);
-size=GST_BUFFER_SIZE(filter->buffer);
+filter->buffer=gst_buffer_append(filter->buffer, outbuf);
+size=gst_buffer_get_size(filter->buffer);
 
 use_seconds=filter->interval ? filter->nextint : filter->seconds;
 
 if ((size/sizeof(float))/EP_RATE < use_seconds)
 	return GST_FLOW_OK;
 
-rawdata=(const float *)GST_BUFFER_DATA(filter->buffer);
+gst_buffer_map (filter->buffer, &info, GST_MAP_READ);
+rawdata=(const float *)info.data;
 
 samp=use_seconds*EP_RATE;
 
